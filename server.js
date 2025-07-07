@@ -152,7 +152,7 @@ server.listen(config.server.port, config.server.host, () => {
   log(`웹 클라이언트 접속 URL: http://localhost:${config.server.port}`);
 });
 
-// 종료 시 정리
+// 종료 시 정리 (다른거 하는거 추가)
 
 process.on('SIGINT', () => {
   log('서버 종료 중...');
