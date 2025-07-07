@@ -148,6 +148,7 @@ function broadcastToOdroid(event, data) {
 
 // 아무거나 하는 함수
 function abcdefg() {
+  
   console.log('랜덤 숫자: ', Math.random())
 }
 
