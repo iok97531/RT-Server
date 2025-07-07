@@ -146,7 +146,7 @@ function broadcastToOdroid(event, data) {
   });
 }
 
-// 서버 시작 코드 추가
+// 서버 시작 코드 추가 [또 다른거]
 server.listen(config.server.port, config.server.host, () => {
   log(`RT-Server 시작됨: http://${config.server.host}:${config.server.port}`);
   log(`웹 클라이언트 접속 URL: http://localhost:${config.server.port}`);
