@@ -146,6 +146,11 @@ function broadcastToOdroid(event, data) {
   });
 }
 
+// 아무거나 하는 함수
+function abcdefg() {
+  console.log('랜덤 숫자: ', Math.random())
+}
+
 // 서버 시작 (다른거 하는거)
 server.listen(config.server.port, config.server.host, () => {
   log(`RT-Server 시작됨: http://${config.server.host}:${config.server.port}`);
