@@ -153,6 +153,7 @@ server.listen(config.server.port, config.server.host, () => {
 });
 
 // 종료 시 정리
+
 process.on('SIGINT', () => {
   log('서버 종료 중...');
   server.close(() => {
