@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RT-Server - Odroid 릴레이 제어</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎛️ Odroid 릴레이 제어 시스템</h1>
+            <div class="status-bar">
+                <div class="connection-status">
+                    <span id="connection-status">연결 중...</span>
+                    <div class="status-indicator" id="status-indicator"></div>
+                </div>
+                <div class="client-info">
+                    <span>웹 클라이언트: <span id="web-count">0</span></span>
+                    <span>Odroid: <span id="odroid-count">0</span></span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="relay-controls">
+                <h2>릴레이 제어</h2>
+                <div class="relay-grid">
+                    <div class="relay-item">
+                        <h3>채널 1</h3>
+                        <div class="relay-control">
+                            <button class="relay-btn" id="relay-1" data-channel="1">
+                                <span class="relay-status">OFF</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relay-item">
+                        <h3>채널 2</h3>
+                        <div class="relay-control">
+                            <button class="relay-btn" id="relay-2" data-channel="2">
+                                <span class="relay-status">OFF</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relay-item">
+                        <h3>채널 3</h3>
+                        <div class="relay-control">
+                            <button class="relay-btn" id="relay-3" data-channel="3">
+                                <span class="relay-status">OFF</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relay-item">
+                        <h3>채널 4</h3>
+                        <div class="relay-control">
+                            <button class="relay-btn" id="relay-4" data-channel="4">
+                                <span class="relay-status">OFF</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button id="all-on" class="control-btn">전체 ON</button>
+                    <button id="all-off" class="control-btn">전체 OFF</button>
+                </div>
+            </div>
+
+            <div class="log-section">
+                <h2>로그</h2>
+                <div class="log-container" id="log-container">
+                    <div class="log-entry">시스템 시작됨...</div>
+                </div>
+                <button id="clear-log" class="control-btn">로그 지우기</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
