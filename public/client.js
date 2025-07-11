@@ -20,8 +20,8 @@ class RelayController {
     }
 
     initSocket() {
-        // Socket.io 연결
-        this.socket = io();
+        // Socket.io 연결 - Odroid IP 주소로 변경
+        this.socket = io('http://192.168.68.114:3000');
         
         // 연결 이벤트
         this.socket.on('connect', () => {
