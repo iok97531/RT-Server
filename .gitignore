@@ -1,2 +1,51 @@
-node_modules
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 package-lock.json
+
+# 환경 변수 (보안상 중요)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 로그 파일들 (현재 프로젝트에 존재)
+logs/
+*.log
+app.log
+error.log
+gpio.log
+
+# PM2 관련
+.pm2/
+ecosystem.config.js.backup
+
+# VSCode 설정 (선택사항)
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# 운영체제
+.DS_Store
+Thumbs.db
+
+# 임시 파일
+*.tmp
+*.temp
+*~
+
+# 백업 파일
+*.backup
+*.bak
+
+# GPIO 테스트 결과
+gpio-test-*
+
+# 배포 관련
+dist/
+build/
