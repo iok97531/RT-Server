@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎛️ Odroid 릴레이 제어 시스템</h1>
+            <h1>🎛️ Odroid 릴레이 제어 시스템 (2쌍)</h1>
             <div class="status-bar">
                 <div class="connection-status">
                     <span id="connection-status">연결 중...</span>
@@ -24,48 +24,36 @@
 
         <main>
             <div class="relay-controls">
-                <h2>릴레이 제어</h2>
+                <h2>릴레이 제어 (Odroid 쌍별)</h2>
                 <div class="relay-grid">
-                    <div class="relay-item">
-                        <h3>채널 1</h3>
+                    <!-- 첫번째 쌍 -->
+                    <div class="relay-item" id="pair-1">
+                        <h3 id="pair-1-title">Odroid 1 (미연결)</h3>
                         <div class="relay-control">
-                            <button class="relay-btn" id="relay-1" data-channel="1">
-                                <span class="relay-status">OFF</span>
-                            </button>
+                            <button class="relay-btn" id="relay-1-1" data-pair="0" data-channel="1"><span class="relay-status">OFF</span> CH1</button>
+                            <button class="relay-btn" id="relay-1-2" data-pair="0" data-channel="2"><span class="relay-status">OFF</span> CH2</button>
+                            <button class="relay-btn" id="relay-1-3" data-pair="0" data-channel="3"><span class="relay-status">OFF</span> CH3</button>
+                            <button class="relay-btn" id="relay-1-4" data-pair="0" data-channel="4"><span class="relay-status">OFF</span> CH4</button>
+                        </div>
+                        <div class="control-buttons">
+                            <button id="all-on-1" class="control-btn" data-pair="0">전체 ON</button>
+                            <button id="all-off-1" class="control-btn" data-pair="0">전체 OFF</button>
                         </div>
                     </div>
-                    
-                    <div class="relay-item">
-                        <h3>채널 2</h3>
+                    <!-- 두번째 쌍 -->
+                    <div class="relay-item" id="pair-2">
+                        <h3 id="pair-2-title">Odroid 2 (미연결)</h3>
                         <div class="relay-control">
-                            <button class="relay-btn" id="relay-2" data-channel="2">
-                                <span class="relay-status">OFF</span>
-                            </button>
+                            <button class="relay-btn" id="relay-2-1" data-pair="1" data-channel="1"><span class="relay-status">OFF</span> CH1</button>
+                            <button class="relay-btn" id="relay-2-2" data-pair="1" data-channel="2"><span class="relay-status">OFF</span> CH2</button>
+                            <button class="relay-btn" id="relay-2-3" data-pair="1" data-channel="3"><span class="relay-status">OFF</span> CH3</button>
+                            <button class="relay-btn" id="relay-2-4" data-pair="1" data-channel="4"><span class="relay-status">OFF</span> CH4</button>
+                        </div>
+                        <div class="control-buttons">
+                            <button id="all-on-2" class="control-btn" data-pair="1">전체 ON</button>
+                            <button id="all-off-2" class="control-btn" data-pair="1">전체 OFF</button>
                         </div>
                     </div>
-                    
-                    <div class="relay-item">
-                        <h3>채널 3</h3>
-                        <div class="relay-control">
-                            <button class="relay-btn" id="relay-3" data-channel="3">
-                                <span class="relay-status">OFF</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="relay-item">
-                        <h3>채널 4</h3>
-                        <div class="relay-control">
-                            <button class="relay-btn" id="relay-4" data-channel="4">
-                                <span class="relay-status">OFF</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="control-buttons">
-                    <button id="all-on" class="control-btn">전체 ON</button>
-                    <button id="all-off" class="control-btn">전체 OFF</button>
                 </div>
             </div>
 

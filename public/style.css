@@ -297,3 +297,9 @@ main {
         text-align: center;
     }
 }
+
+/* 릴레이 버튼 간격 추가 */
+.relay-control .relay-btn {
+    margin-right: 8px;
+    margin-bottom: 6px;
+}

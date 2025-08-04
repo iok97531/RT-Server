@@ -1,14 +1,17 @@
 // client.js - RT-Server 웹 클라이언트
 
+const RELAY_PAIR_COUNT = 2;
+const RELAYS_PER_PAIR = 4;
+let odroidList = []; // 서버에서 순서대로 받음
+let relayStates = [
+    Array(RELAYS_PER_PAIR).fill(false),
+    Array(RELAYS_PER_PAIR).fill(false)
+];
+
 class RelayController {
     constructor() {
         this.socket = null;
-        this.relayState = {
-            ch1: false,
-            ch2: false,
-            ch3: false,
-            ch4: false
-        };
+        this.relayState = { ch1: false, ch2: false, ch3: false, ch4: false }; // ← 추가
         
         this.init();
     }
@@ -49,17 +52,19 @@ class RelayController {
 
         // 릴레이 상태 업데이트 수신
         this.socket.on('relay_state', (state) => {
-            this.addLog('릴레이 상태 수신됨', 'info');
-            this.relayState = state;
-            this.updateRelayUI();
+            // state: [{ch1, ch2, ch3, ch4}, ...]
+            if (Array.isArray(state) && state.length === RELAY_PAIR_COUNT) {
+                relayStates = state.map(pair => [pair.ch1, pair.ch2, pair.ch3, pair.ch4]);
+                // 첫번째 쌍을 this.relayState에 동기화 (키보드 단축키 등에서 사용)
+                this.relayState = { ...state[0] };
+                this.updateRelayUI();
+            }
         });
 
         // 릴레이 상태 변경 수신
-        this.socket.on('relay_state_update', (data) => {
-            const { channel, state } = data;
-            this.addLog(`릴레이 CH${channel}: ${state ? 'ON' : 'OFF'}`, 'info');
-            this.relayState[`ch${channel}`] = state;
-            this.updateRelayButton(channel, state);
+        this.socket.on('relay_state_update', ({ odroidIndex, channel, state }) => {
+            relayStates[odroidIndex][channel - 1] = state;
+            this.updateRelayUI();
         });
 
         // 클라이언트 수 업데이트
@@ -75,26 +80,40 @@ class RelayController {
         this.socket.on('odroid_disconnected', (data) => {
             this.addLog('Odroid 연결 해제됨', 'warning');
         });
+
+        // Odroid 연결 목록 수신
+        this.socket.on('odroid_list', (list) => {
+            console.log
+            odroidList = list;
+            for (let i = 0; i < RELAY_PAIR_COUNT; i++) {
+                const title = document.getElementById(`pair-${i+1}-title`);
+                if (odroidList[i]) {
+                    title.textContent = `Odroid ${i+1} (${odroidList[i].name || odroidList[i].id})`;
+                    this.enablePair(i, true);
+                } else {
+                    title.textContent = `Odroid ${i+1} (미연결)`;
+                    this.enablePair(i, false);
+                }
+            }
+        });
     }
 
     initEventListeners() {
         // 릴레이 버튼 이벤트
-        document.querySelectorAll('.relay-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const channel = parseInt(e.currentTarget.dataset.channel);
-                const currentState = this.relayState[`ch${channel}`];
-                this.toggleRelay(channel, !currentState);
+        for (let pairIdx = 0; pairIdx < RELAY_PAIR_COUNT; pairIdx++) {
+            for (let ch = 1; ch <= RELAYS_PER_PAIR; ch++) {
+                document.getElementById(`relay-${pairIdx+1}-${ch}`).addEventListener('click', (e) => {
+                    const state = !relayStates[pairIdx][ch-1];
+                    this.toggleRelay(pairIdx, ch, state);
+                });
+            }
+            document.getElementById(`all-on-${pairIdx+1}`).addEventListener('click', () => {
+                this.controlAllRelays(pairIdx, true);
             });
-        });
-
-        // 전체 제어 버튼
-        document.getElementById('all-on').addEventListener('click', () => {
-            this.controlAllRelays(true);
-        });
-
-        document.getElementById('all-off').addEventListener('click', () => {
-            this.controlAllRelays(false);
-        });
+            document.getElementById(`all-off-${pairIdx+1}`).addEventListener('click', () => {
+                this.controlAllRelays(pairIdx, false);
+            });
+        }
 
         // 로그 지우기 버튼
         document.getElementById('clear-log').addEventListener('click', () => {
@@ -102,29 +121,24 @@ class RelayController {
         });
     }
 
-    toggleRelay(channel, state) {
+    toggleRelay(pairIdx, channel, state) {
         if (!this.socket || !this.socket.connected) {
             this.addLog('서버에 연결되지 않음', 'error');
             return;
         }
-
-        this.addLog(`릴레이 CH${channel} ${state ? 'ON' : 'OFF'} 요청`, 'info');
-        
-        // 서버에 릴레이 제어 요청
+        this.addLog(`릴레이 ${pairIdx+1}번 쌍 CH${channel} ${state ? 'ON' : 'OFF'} 요청`, 'info');
         this.socket.emit('relay_control', {
+            odroidIndex: pairIdx,
             channel: channel,
             state: state
         });
-
-        // UI 즉시 업데이트 (서버 응답 대기 없이)
-        this.updateRelayButton(channel, state);
+        this.updateRelayButton(pairIdx, channel, state);
     }
 
-    controlAllRelays(state) {
-        this.addLog(`전체 릴레이 ${state ? 'ON' : 'OFF'} 요청`, 'info');
-        
-        for (let i = 1; i <= 4; i++) {
-            this.toggleRelay(i, state);
+    controlAllRelays(pairIdx, state) {
+        this.addLog(`릴레이 ${pairIdx+1}번 쌍 전체 ${state ? 'ON' : 'OFF'} 요청`, 'info');
+        for (let ch = 1; ch <= RELAYS_PER_PAIR; ch++) {
+            this.toggleRelay(pairIdx, ch, state);
         }
     }
 
@@ -138,10 +152,35 @@ class RelayController {
         this.relayState[`ch${channel}`] = state;
     }
 
+    updateRelayButton(pairIdx, channel, state) {
+        const btn = document.getElementById(`relay-${pairIdx+1}-${channel}`);
+        if (!btn) return; // 버튼이 없으면 함수 종료
+        const statusSpan = btn.querySelector('.relay-status');
+        btn.className = `relay-btn ${state ? 'on' : 'off'}`;
+        statusSpan.textContent = state ? 'ON' : 'OFF';
+        relayStates[pairIdx][channel-1] = state;
+    }
+
     updateRelayUI() {
         for (let i = 1; i <= 4; i++) {
             const state = this.relayState[`ch${i}`];
             this.updateRelayButton(i, state);
+        }
+
+        for (let pairIdx = 0; pairIdx < RELAY_PAIR_COUNT; pairIdx++) {
+            for (let ch = 1; ch <= RELAYS_PER_PAIR; ch++) {
+                const btn = document.getElementById(`relay-${pairIdx+1}-${ch}`);
+                const statusSpan = btn.querySelector('.relay-status');
+                if (relayStates[pairIdx][ch-1]) {
+                    btn.classList.add('on');
+                    btn.classList.remove('off');
+                    statusSpan.textContent = 'ON';
+                } else {
+                    btn.classList.add('off');
+                    btn.classList.remove('on');
+                    statusSpan.textContent = 'OFF';
+                }
+            }
         }
     }
 
@@ -191,13 +230,19 @@ class RelayController {
         const logContainer = document.getElementById('log-container');
         logContainer.innerHTML = '<div class="log-entry">로그가 지워졌습니다.</div>';
     }
+
+    enablePair(pairIdx, enabled) {
+        for (let ch = 1; ch <= RELAYS_PER_PAIR; ch++) {
+            document.getElementById(`relay-${pairIdx+1}-${ch}`).disabled = !enabled;
+        }
+        document.getElementById(`all-on-${pairIdx+1}`).disabled = !enabled;
+        document.getElementById(`all-off-${pairIdx+1}`).disabled = !enabled;
+    }
 }
 
 // DOM 로드 완료 후 초기화
 document.addEventListener('DOMContentLoaded', () => {
     const relayController = new RelayController();
-    
-    // 전역 객체로 등록 (디버깅용)
     window.relayController = relayController;
 });
 
@@ -211,16 +256,20 @@ document.addEventListener('keydown', (e) => {
             case '4':
                 e.preventDefault();
                 const channel = parseInt(e.key);
-                const currentState = window.relayController.relayState[`ch${channel}`];
-                window.relayController.toggleRelay(channel, !currentState);
+                const currentState = relayStates[0][channel-1]; // 첫 번째 쌍
+                window.relayController.toggleRelay(0, channel, !currentState); // ← 수정!
                 break;
             case 'a':
                 e.preventDefault();
-                window.relayController.controlAllRelays(true);
+                for (let pairIdx = 0; pairIdx < RELAY_PAIR_COUNT; pairIdx++) {
+                    window.relayController.controlAllRelays(pairIdx, true);
+                }
                 break;
             case 'd':
                 e.preventDefault();
-                window.relayController.controlAllRelays(false);
+                for (let pairIdx = 0; pairIdx < RELAY_PAIR_COUNT; pairIdx++) {
+                    window.relayController.controlAllRelays(pairIdx, false);
+                }
                 break;
         }
     }
