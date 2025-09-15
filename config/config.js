@@ -6,8 +6,9 @@ module.exports = {
   
   socket: {
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
+      origin: true, // 요청 출처를 동적으로 허용
+      methods: ["GET", "POST"],
+      credentials: true // 인증 정보(쿠키) 허용
     },
     pingTimeout: 60000,
     pingInterval: 25000

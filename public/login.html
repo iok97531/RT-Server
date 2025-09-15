@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - RT-Server</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .login-container input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🎛️ RT-Server 로그인</h1>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="사용자 이름" required>
+            <input type="password" id="password" placeholder="비밀번호" required>
+            <button type="submit" class="control-btn">로그인</button>
+        </form>
+        <p id="error-message" style="color: red; margin-top: 15px;"></p>
+    </div>
+    <script src="login.js"></script>
+</body>
+</html>

@@ -1,10 +1,14 @@
 // server.js
 // RT-Server: 웹 클라이언트와 Odroid 간 중계 서버 (웹 전용)
 
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io')
+const socketIo = require('socket.io');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const config = require('./config/config');
 
 // Express 앱 및 서버 생성
@@ -15,7 +19,10 @@ const io = socketIo(server, config.socket);
 // 미들웨어 설정
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // 정적 파일 서빙
+app.use(cookieParser());
+
+// 정적 파일 서빙 (index.html 자동 서빙 비활성화)
+app.use(express.static('public', { index: false }));
 
 // 연결된 클라이언트 관리
 const clients = {
@@ -53,8 +60,66 @@ function log(message, level = 'info') {
   console.log(`[${timestamp}] [${level.toUpperCase()}] ${levelIcon[level] || 'ℹ️'} ${message}`);
 }
 
-// 기본 라우트 - 웹 UI 제공
-app.get('/', (req, res) => {
+// 인증 미들웨어
+function verifyToken(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) {
+    return res.redirect('/login');
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.redirect('/login');
+    }
+    req.user = decoded;
+    next();
+  });
+}
+
+// 로그인 페이지
+app.get('/login', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) {
+    // 토큰이 없으면 로그인 페이지를 보여줌
+    return res.sendFile(__dirname + '/public/login.html');
+  }
+
+  // 토큰이 있으면 유효성을 검사
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      // 토큰이 유효하지 않으면(만료 등) 로그인 페이지를 보여줌
+      return res.sendFile(__dirname + '/public/login.html');
+    }
+    // 토큰이 유효하면 메인 페이지로 리디렉션
+    return res.redirect('/');
+  });
+});
+
+// 로그인 API
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === process.env.USERNAME && password === process.env.PASSWORD) {
+    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    return res.json({ success: true });
+  }
+  res.status(401).json({ success: false, message: '아이디 또는 비밀번호가 잘못되었습니다.' });
+});
+
+// 로그아웃 API
+app.get('/api/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ success: true });
+});
+
+// 사용자 정보 API (인증 필요)
+app.get('/api/user', verifyToken, (req, res) => {
+  // verifyToken 미들웨어에서 req.user에 사용자 정보를 저장했습니다.
+  res.json({ success: true, user: req.user });
+});
+
+
+// 메인 페이지 (인증 필요)
+app.get('/', verifyToken, (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
@@ -73,9 +138,24 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Socket.IO 인증 미들웨어
+io.use((socket, next) => {
+  const cookieHeader = socket.handshake.headers.cookie;
+  if (!cookieHeader) return next(new Error('Authentication error: No cookie.'));
+  
+  const token = cookieHeader.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
+  if (!token) return next(new Error('Authentication error: No token.'));
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return next(new Error('Authentication error: Invalid token.'));
+    socket.user = decoded;
+    next();
+  });
+});
+
 // Socket.io 연결 처리
 io.on('connection', (socket) => {
-    log(`새로운 연결: ${socket.id}`);
+    log(`새로운 연결: ${socket.id} (사용자: ${socket.user.username})`);
 
     socket.on('register', (data) => {
         const { type, name } = data;

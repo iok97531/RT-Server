@@ -1,7 +1,7 @@
 // client.js - RT-Server 웹 클라이언트
 
 const RELAY_PAIR_COUNT = 2;
-const RELAYS_PER_PAIR = 4;
+const RELAYS_PER_PAIR = 4; // 서버 URL
 let odroidList = []; // 서버에서 순서대로 받음
 let relayStates = [
     Array(RELAYS_PER_PAIR).fill(false),
@@ -17,14 +17,32 @@ class RelayController {
     }
 
     init() {
+        this.loadUserInfo();
         this.initSocket();
         this.initEventListeners();
         this.addLog('클라이언트 초기화 완료', 'info');
     }
 
+    async loadUserInfo() {
+        try {
+            const response = await fetch('/api/user');
+            if (!response.ok) throw new Error('Failed to fetch user');
+            const data = await response.json();
+            if (data.success && data.user) {
+                document.getElementById('username-display').textContent = `👋 ${data.user.username}님`;
+            } else {
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            this.addLog('사용자 정보 로딩 실패. 로그인 페이지로 이동합니다.', 'error');
+            window.location.href = '/login';
+        }
+    }
+
     initSocket() {
-        // Socket.io 연결 - 로컬 서버
-        this.socket = io('http://localhost:3000');
+        // Socket.io 연결 - 현재 페이지를 서빙한 호스트에 연결
+        // withCredentials: true 옵션으로 인증 쿠키를 함께 전송
+        this.socket = io({ withCredentials: true });
         
         // 연결 이벤트
         this.socket.on('connect', () => {
@@ -83,7 +101,6 @@ class RelayController {
 
         // Odroid 연결 목록 수신
         this.socket.on('odroid_list', (list) => {
-            console.log
             odroidList = list;
             for (let i = 0; i < RELAY_PAIR_COUNT; i++) {
                 const title = document.getElementById(`pair-${i+1}-title`);
@@ -119,6 +136,17 @@ class RelayController {
         document.getElementById('clear-log').addEventListener('click', () => {
             this.clearLog();
         });
+
+        // 로그아웃 버튼
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/logout');
+                this.addLog('로그아웃 되었습니다. 로그인 페이지로 이동합니다.', 'info');
+                window.location.href = '/login';
+            } catch (error) {
+                this.addLog('로그아웃 중 오류가 발생했습니다.', 'error');
+            }
+        });
     }
 
     toggleRelay(pairIdx, channel, state) {
@@ -142,16 +170,6 @@ class RelayController {
         }
     }
 
-    updateRelayButton(channel, state) {
-        const btn = document.getElementById(`relay-${channel}`);
-        const statusSpan = btn.querySelector('.relay-status');
-        
-        btn.className = `relay-btn ${state ? 'on' : 'off'}`;
-        statusSpan.textContent = state ? 'ON' : 'OFF';
-        
-        this.relayState[`ch${channel}`] = state;
-    }
-
     updateRelayButton(pairIdx, channel, state) {
         const btn = document.getElementById(`relay-${pairIdx+1}-${channel}`);
         if (!btn) return; // 버튼이 없으면 함수 종료
@@ -162,24 +180,9 @@ class RelayController {
     }
 
     updateRelayUI() {
-        for (let i = 1; i <= 4; i++) {
-            const state = this.relayState[`ch${i}`];
-            this.updateRelayButton(i, state);
-        }
-
         for (let pairIdx = 0; pairIdx < RELAY_PAIR_COUNT; pairIdx++) {
             for (let ch = 1; ch <= RELAYS_PER_PAIR; ch++) {
-                const btn = document.getElementById(`relay-${pairIdx+1}-${ch}`);
-                const statusSpan = btn.querySelector('.relay-status');
-                if (relayStates[pairIdx][ch-1]) {
-                    btn.classList.add('on');
-                    btn.classList.remove('off');
-                    statusSpan.textContent = 'ON';
-                } else {
-                    btn.classList.add('off');
-                    btn.classList.remove('on');
-                    statusSpan.textContent = 'OFF';
-                }
+                this.updateRelayButton(pairIdx, ch, relayStates[pairIdx][ch-1]);
             }
         }
     }
