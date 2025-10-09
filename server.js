@@ -97,7 +97,7 @@ app.get('/login', (req, res) => {
 // 로그인 API
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === process.env.USERNAME && password === process.env.PASSWORD) {
+  if (username === process.env.RT_SERVER_USERNAME && password === process.env.RT_SERVER_PASSWORD) {
     const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1d' });
     res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     return res.json({ success: true });
