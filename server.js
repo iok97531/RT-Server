@@ -139,19 +139,21 @@ app.get('/api/status', (req, res) => {
 });
 
 // Socket.IO 인증 미들웨어
+/*
 io.use((socket, next) => {
   const cookieHeader = socket.handshake.headers.cookie;
   if (!cookieHeader) return next(new Error('Authentication error: No cookie.'));
   
   const token = cookieHeader.split(';').find(c => c.trim().startsWith('token='))?.split('=')[1];
   if (!token) return next(new Error('Authentication error: No token.'));
-
+  
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return next(new Error('Authentication error: Invalid token.'));
     socket.user = decoded;
     next();
   });
 });
+*/
 
 // Socket.io 연결 처리
 io.on('connection', (socket) => {
