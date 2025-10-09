@@ -157,7 +157,7 @@ io.use((socket, next) => {
 
 // Socket.io 연결 처리
 io.on('connection', (socket) => {
-    log(`새로운 연결: ${socket.id} (사용자: ${socket.user.username})`);
+    log(`새로운 연결: ${socket.id}`);
 
     socket.on('register', (data) => {
         const { type, name } = data;
